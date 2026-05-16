@@ -5,7 +5,11 @@ A practical guide to `@State`, `@Binding`, `@StateObject`, `@ObservedObject`, `@
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 شرح عملي ومبسط لأهم Property Wrappers في SwiftUI مع أمثلة وتشبيهات تساعدك تختار النوع الصح في كل حالة.
+
+</div>
 
 </details>
 
@@ -58,9 +62,13 @@ Here, `count` looks like a normal `Int`, but `@State` adds extra behavior:
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 Property Wrapper يعني إن المتغير مش مجرد `var` عادي، لكن Swift بتضيف حواليه behavior معين.
 
 مثال: `@State` بتخلي SwiftUI تراقب المتغير وتعمل update للـ UI لما قيمته تتغير.
+
+</div>
 
 </details>
 
@@ -121,9 +129,13 @@ That is why SwiftUI uses property wrappers like:
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 SwiftUI مش بتخليك تغير الـ UI يدوي زي UIKit.
 
 أنت بتغير الداتا، وSwiftUI تعيد بناء الـ View بناءً على الداتا الجديدة.
+
+</div>
 
 </details>
 
@@ -180,9 +192,13 @@ When `count` changes:
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 `@State` مش بتحول الـ `Int` أو `String` إلى reference type.
 
 هي فقط بتخلي SwiftUI تدير تخزين القيمة وتعمل refresh للـ View لما القيمة تتغير.
+
+</div>
 
 </details>
 
@@ -224,11 +240,15 @@ A simple value is persisted in UserDefaults
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 أهم سؤال:
 
 مين مالك الداتا؟
 
 الإجابة على السؤال ده غالبًا هتحدد الـ wrapper الصح.
+
+</div>
 
 </details>
 
@@ -315,6 +335,8 @@ If another view needs to modify this value, you usually pass it as a `@Binding`.
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 استخدم `@State` لما القيمة تخص نفس الشاشة فقط.
 
 مثال:
@@ -327,6 +349,8 @@ If another view needs to modify this value, you usually pass it as a `@Binding`.
 والقاعدة المهمة:
 
 `@State` معناها إن الـ View دي هي المالكة للقيمة.
+
+</div>
 
 </details>
 
@@ -446,12 +470,18 @@ You want to apply validation or transformation when the value changes
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 ممكن تعمل `Binding` يدوي بـ `get` و `set` لما القيمة مش جاهزة كـ Binding أو محتاج تعدل عليها قبل ما تمررها للـ child.
+
+</div>
 
 </details>
 
 <details>
 <summary>بالعربي</summary>
+
+<div dir="rtl">
 
 `@Binding` يعني إن القيمة مش مملوكة للـ child.
 
@@ -460,6 +490,8 @@ You want to apply validation or transformation when the value changes
 `isOn` يعني القيمة نفسها.
 
 `$isOn` يعني Binding على القيمة.
+
+</div>
 
 </details>
 
@@ -547,12 +579,18 @@ This avoids "Publishing changes from background threads is not allowed" warnings
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 لو الـ ViewModel فيه async، استخدم `@MainActor` عشان تضمن إن تحديث الـ `@Published` يحصل دايمًا على الـ main thread وما يجيش تحذير من SwiftUI.
+
+</div>
 
 </details>
 
 <details>
 <summary>بالعربي</summary>
+
+<div dir="rtl">
 
 استخدم `@StateObject` لما الـ View هي اللي بتعمل create للـ ViewModel.
 
@@ -567,6 +605,8 @@ This avoids "Publishing changes from background threads is not allowed" warnings
 ```
 
 مش `@ObservedObject`.
+
+</div>
 
 </details>
 
@@ -711,6 +751,8 @@ ObservableObject
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 `class` لوحدها معناها إن الـ ViewModel reference type، لكن ده مش كفاية عشان SwiftUI تعمل update.
 
 SwiftUI محتاجة إشعار إن في property اتغيرت جوه الـ ViewModel.
@@ -726,6 +768,8 @@ class لوحدها = reference فقط
 ObservableObject = SwiftUI تقدر تراقبه
 @Published = property تغييرها يبعت notification
 ```
+
+</div>
 
 </details>
 
@@ -800,9 +844,13 @@ View receives the object
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 لو الـ ViewModel اتعمل جوه نفس الشاشة، استخدم `@StateObject`.
 
 لو الـ ViewModel جاي من parent، استخدم `@ObservedObject`.
+
+</div>
 
 </details>
 
@@ -878,6 +926,8 @@ enabled/disabled state
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 `@Environment` للقيم العامة اللي SwiftUI أو parent حاططها في البيئة.
 
 زي:
@@ -886,6 +936,8 @@ enabled/disabled state
 - أعرف dark mode ولا light mode
 - أعرف اتجاه اللغة RTL/LTR
 - أفتح URL
+
+</div>
 
 </details>
 
@@ -1018,6 +1070,8 @@ So use it carefully for truly shared app-level or flow-level objects.
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 `@EnvironmentObject` مناسب للـ objects المشتركة على مستوى كبير.
 
 زي:
@@ -1028,6 +1082,8 @@ So use it carefully for truly shared app-level or flow-level objects.
 - AppSettings
 
 لكنه مش مناسب لأي ViewModel خاص بشاشة واحدة.
+
+</div>
 
 </details>
 
@@ -1124,9 +1180,13 @@ If you need to persist a struct or array, encode it to `Data` with `JSONEncoder`
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 `@AppStorage` بيدعم أنواع محددة فقط: `Bool`, `Int`, `Double`, `String`, `URL`, `Data`، و enums من نوع `RawRepresentable`.
 
 لو محتاج تخزن struct أو array، حوّله لـ `Data` بـ `JSONEncoder` الأول.
+
+</div>
 
 </details>
 
@@ -1187,6 +1247,8 @@ Not automatically reactive in SwiftUI unless you add observation manually
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 `@AppStorage` هو wrapper من SwiftUI فوق `UserDefaults`.
 
 يعني:
@@ -1199,106 +1261,105 @@ Not automatically reactive in SwiftUI unless you add observation manually
 
 أما token أو password أو أي بيانات حساسة، استخدم Keychain.
 
+</div>
+
 </details>
 
 ---
 
 ## Apartment Analogy
 
-A simple analogy to remember the differences.
+A simple analogy to remember the differences between SwiftUI property wrappers.
 
-### `@State`
-
-Something inside your own room.
-
-You own it, and it belongs only to your room.
-
-```swift
-@State private var isPasswordVisible = false
-```
-
-### `@Binding`
-
-A switch in your room controlling a light owned by another room.
-
-You do not own the original value, but you can change it.
-
-```swift
-@Binding var isOn: Bool
-```
-
-### `@StateObject`
-
-A device you bought and own in your apartment.
-
-You created it, and you are responsible for its lifetime.
-
-```swift
-@StateObject private var viewModel = LoginViewModel()
-```
-
-### `@ObservedObject`
-
-A device owned by someone else, but you can watch and use it.
-
-```swift
-@ObservedObject var viewModel: LoginViewModel
-```
-
-### `@Environment`
-
-Building-wide rules or services.
-
-For example:
+Think of your app as a building, and each SwiftUI View as an apartment inside that building.
 
 ```text
-theme
-language direction
-dismiss action
-open URL
+@State
+= Something inside your own apartment.
+You own it, and it belongs only to this View.
+
+Example:
+isPasswordVisible, searchText, selectedTab
 ```
-
-```swift
-@Environment(\.dismiss) private var dismiss
-```
-
-### `@EnvironmentObject`
-
-A shared building system.
-
-For example:
 
 ```text
-internet
-security system
-central coordinator
-shared session
+@Binding
+= A switch inside your apartment that controls something owned by another apartment.
+
+You do not own the original value.
+You only have a connection to it, and you can change it.
+
+Example:
+A child view changes a value owned by the parent view.
 ```
 
-```swift
-@EnvironmentObject var session: UserSession
+```text
+@StateObject
+= A device you bought and placed inside your apartment.
+
+You created it, you own it, and it should stay alive as long as your apartment exists.
+
+Example:
+A screen creates its own ViewModel.
 ```
 
-### `@AppStorage`
+```text
+@ObservedObject
+= A device owned by another apartment, but you are allowed to watch and use it.
 
-A notebook where you save simple preferences so they are still there tomorrow.
+You did not create it.
+You only observe it.
 
-```swift
-@AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+Example:
+A child view receives a ViewModel from the parent.
+```
+
+```text
+@Environment
+= Building-wide settings or services.
+
+These are values already available in the building environment.
+
+Example:
+theme, language direction, dismiss action, open URL
+```
+
+```text
+@EnvironmentObject
+= A shared system used by the whole building.
+
+It is injected at a high level, and many apartments can access it.
+
+Example:
+UserSession, AppCoordinator, CartManager, AppSettings
+```
+
+```text
+@AppStorage
+= A notebook where you save simple preferences.
+
+Even if you leave the apartment and come back later, the saved value is still there.
+
+Example:
+hasSeenOnboarding, selectedLanguage, selectedTheme
 ```
 
 <details>
 <summary>بالعربي المختصر</summary>
 
+<div dir="rtl">
+
 ```text
-@State = حاجة ملك الشاشة نفسها
-@Binding = وصلة لقيمة مملوكة للـ parent
-@StateObject = object الشاشة هي اللي عملته وتملكه
-@ObservedObject = object جاي من بره
-@Environment = قيمة عامة من النظام أو parent
-@EnvironmentObject = object مشترك على مستوى كبير
-@AppStorage = قيمة بسيطة محفوظة في UserDefaults
+@State = حاجة جوه شقتك وملك الشاشة نفسها
+@Binding = مفتاح عندك بيتحكم في حاجة أصلها عند الـ parent
+@StateObject = جهاز أنت اشتريته وحطيته في شقتك، يعني الشاشة عملته وتملكه
+@ObservedObject = جهاز مش بتاعك، جاي من بره، وأنت بس بتراقبه
+@Environment = إعدادات عامة في العمارة كلها، زي اللغة أو الثيم أو dismiss
+@EnvironmentObject = نظام مشترك في العمارة، زي session أو coordinator
+@AppStorage = نوتة بتخزن فيها إعدادات بسيطة وتفضل محفوظة بعدين
 ```
+
+</div>
 
 </details>
 
@@ -1725,6 +1786,8 @@ Simple persistent UserDefaults value
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 اختيار الـ wrapper الصح يبدأ من سؤال واحد:
 
 ```text
@@ -1738,6 +1801,8 @@ Simple persistent UserDefaults value
 هل محتاجاها تفضل بعد قفل التطبيق؟
 هل SwiftUI لازم تعمل refresh لما تتغير؟
 ```
+
+</div>
 
 </details>
 
@@ -1759,8 +1824,12 @@ It focuses on real-world usage, common mistakes, and choosing the right wrapper 
 <details>
 <summary>بالعربي</summary>
 
+<div dir="rtl">
+
 الـ README ده مرجع عملي لـ state management في SwiftUI، ومناسب لأي iOS developer.
 
 الإصدار الحالي مش بيغطي الـ Observation framework الجديد (`@Observable` و `@Bindable`) — هيكون في مقال منفصل.
+
+</div>
 
 </details>
