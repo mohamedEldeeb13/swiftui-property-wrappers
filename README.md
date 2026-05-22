@@ -1,13 +1,13 @@
 # SwiftUI Property Wrappers Explained
 
-A practical guide to `@State`, `@Binding`, `@StateObject`, `@ObservedObject`, `@Environment`, `@EnvironmentObject`, and `@AppStorage`.
+A practical guide to `@State`, `@Binding`, `@StateObject`, `@ObservedObject`, `@Environment`, `@EnvironmentObject`, `@AppStorage`, and adjacent SwiftUI property wrappers like `@FocusState`, `@SceneStorage`, `@GestureState`, and `@Namespace`.
 
 <details>
 <summary>بالعربي</summary>
 
 <div dir="rtl">
 
-شرح عملي ومبسط لأهم Property Wrappers في SwiftUI مع أمثلة وتشبيهات تساعدك تختار النوع الصح في كل حالة.
+شرح عملي ومبسط لأهم Property Wrappers في SwiftUI مع أمثلة وتشبيهات تساعدك تختار النوع الصح في كل حالة، بالإضافة إلى wrappers متخصصة زي `@FocusState`, `@SceneStorage`, `@GestureState`, و `@Namespace`.
 
 </div>
 
@@ -31,12 +31,19 @@ A practical guide to `@State`, `@Binding`, `@StateObject`, `@ObservedObject`, `@
 10. [`@Environment`](#environment)
 11. [`@EnvironmentObject`](#environmentobject)
 12. [`@AppStorage`](#appstorage)
-13. [Apartment Analogy](#apartment-analogy)
-14. [Quick Decision Guide](#quick-decision-guide)
-15. [Summary Table](#summary-table)
-16. [Common Mistakes](#common-mistakes)
-17. [Recommended Usage in Real Projects](#recommended-usage-in-real-projects)
-18. [Final Conclusion](#final-conclusion)
+13. [Adjacent SwiftUI Property Wrappers](#adjacent-swiftui-property-wrappers)
+    - [`@FocusState`](#focusstate)
+    - [`@SceneStorage`](#scenestorage)
+    - [`@GestureState`](#gesturestate)
+    - [`@Namespace`](#namespace)
+    - [Adjacent Wrappers Summary Table](#adjacent-wrappers-summary-table)
+    - [Adjacent Wrappers Mental Model](#adjacent-wrappers-mental-model)
+14. [Apartment Analogy](#apartment-analogy)
+15. [Quick Decision Guide](#quick-decision-guide)
+16. [Summary Table](#summary-table)
+17. [Common Mistakes](#common-mistakes)
+18. [Recommended Usage in Real Projects](#recommended-usage-in-real-projects)
+19. [Final Conclusion](#final-conclusion)
 
 ---
 
@@ -235,6 +242,18 @@ A shared object comes from environment
 
 A simple value is persisted in UserDefaults
 → @AppStorage
+
+Input focus or keyboard state
+→ @FocusState
+
+Temporary scene restoration state
+→ @SceneStorage
+
+Temporary gesture state
+→ @GestureState
+
+Shared animation identity
+→ @Namespace
 ```
 
 <details>
@@ -472,17 +491,6 @@ You want to apply validation or transformation when the value changes
 
 <div dir="rtl">
 
-ممكن تعمل `Binding` يدوي بـ `get` و `set` لما القيمة مش جاهزة كـ Binding أو محتاج تعدل عليها قبل ما تمررها للـ child.
-
-</div>
-
-</details>
-
-<details>
-<summary>بالعربي</summary>
-
-<div dir="rtl">
-
 `@Binding` يعني إن القيمة مش مملوكة للـ child.
 
 القيمة الأصلية موجودة في parent، والـ child واخد وصلة عليها يقدر يقرأ ويعدل.
@@ -490,6 +498,8 @@ You want to apply validation or transformation when the value changes
 `isOn` يعني القيمة نفسها.
 
 `$isOn` يعني Binding على القيمة.
+
+كمان ممكن تعمل `Binding` يدوي بـ `get` و `set` لما القيمة مش جاهزة كـ Binding أو محتاج تعدل عليها قبل ما تمررها للـ child.
 
 </div>
 
@@ -1267,6 +1277,648 @@ Not automatically reactive in SwiftUI unless you add observation manually
 
 ---
 
+## Adjacent SwiftUI Property Wrappers
+
+Besides the main SwiftUI property wrappers like `@State`, `@Binding`, `@StateObject`, `@ObservedObject`, `@Environment`, `@EnvironmentObject`, and `@AppStorage`, SwiftUI also provides some specialized property wrappers.
+
+These wrappers are not usually used to manage screen ViewModels or app-wide state.
+
+Instead, they solve specific UI-related problems such as:
+
+```text
+Input focus
+Scene state restoration
+Temporary gesture state
+Shared animation identity
+```
+
+In this section, we will cover:
+
+```swift
+@FocusState
+@SceneStorage
+@GestureState
+@Namespace
+```
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+فيه Property Wrappers تانية في SwiftUI قريبة من فكرة الـ state management، لكنها مش بديل مباشر لـ `@StateObject` أو `@ObservedObject`.
+
+الأنواع دي بتستخدم لحالات معينة زي:
+
+```text
+التحكم في الكيبورد والفوكس
+حفظ حالة بسيطة للشاشة
+حالة مؤقتة أثناء الـ gesture
+ربط animations بين views مختلفة
+```
+
+</div>
+
+</details>
+
+---
+
+## `@FocusState`
+
+> **Availability:** iOS 15+ / macOS 12+ / watchOS 8+ / tvOS 15+
+
+Use `@FocusState` when you need to track or control input focus in SwiftUI.
+
+It is commonly used with:
+
+```swift
+TextField
+SecureField
+TextEditor
+```
+
+In UIKit, you usually control input focus using:
+
+```swift
+textField.becomeFirstResponder()
+textField.resignFirstResponder()
+```
+
+In SwiftUI, `@FocusState` gives you a declarative way to control the same behavior.
+
+### Example
+
+```swift
+struct LoginView: View {
+    @State private var phone = ""
+    @FocusState private var isPhoneFocused: Bool
+
+    var body: some View {
+        VStack(spacing: 16) {
+            TextField("Phone", text: $phone)
+                .focused($isPhoneFocused)
+
+            Button("Focus Phone") {
+                isPhoneFocused = true
+            }
+
+            Button("Dismiss Keyboard") {
+                isPhoneFocused = false
+            }
+        }
+    }
+}
+```
+
+When `isPhoneFocused` becomes `true`, the `TextField` becomes focused and the keyboard appears.
+
+When `isPhoneFocused` becomes `false`, the focus is removed and the keyboard is dismissed.
+
+### Multiple fields example
+
+For multiple input fields, using an enum is usually cleaner than using many Boolean values.
+
+```swift
+enum Field {
+    case phone
+    case password
+}
+
+struct LoginView: View {
+    @State private var phone = ""
+    @State private var password = ""
+
+    @FocusState private var focusedField: Field?
+
+    var body: some View {
+        VStack(spacing: 16) {
+            TextField("Phone", text: $phone)
+                .focused($focusedField, equals: .phone)
+
+            SecureField("Password", text: $password)
+                .focused($focusedField, equals: .password)
+
+            Button("Next") {
+                focusedField = .password
+            }
+
+            Button("Done") {
+                focusedField = nil
+            }
+        }
+    }
+}
+```
+
+### Supported value types
+
+`@FocusState` is generic over its value type. The two valid shapes are:
+
+```text
+Bool                  — for a single field (focused or not)
+Hashable (often enum) — for multiple fields, usually wrapped as Optional
+```
+
+So `@FocusState private var focusedField: Field?` works because `Field` is `Hashable`. A custom struct also works as long as it conforms to `Hashable`.
+
+### When should you use `@FocusState`?
+
+Use `@FocusState` when you need to:
+
+```text
+Open the keyboard
+Dismiss the keyboard
+Move focus from one field to another
+Know which input field is currently active
+```
+
+### Summary
+
+```text
+@FocusState controls input focus in SwiftUI.
+It is mostly used with text fields and keyboard handling.
+```
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+`@FocusState` بتستخدم لما تكون عاوز تتحكم في الفوكس بتاع الـ input.
+
+يعني تعرف أنهي `TextField` هو النشط حاليًا، أو تفتح الكيبورد، أو تقفل الكيبورد، أو تنقل المستخدم من field للتاني.
+
+بدل ما في UIKit كنت بتستخدم:
+
+```swift
+becomeFirstResponder()
+resignFirstResponder()
+```
+
+في SwiftUI بتستخدم `@FocusState`.
+
+</div>
+
+</details>
+
+---
+
+## `@SceneStorage`
+
+> **Availability:** iOS 14+ / macOS 11+ / watchOS 7+ / tvOS 14+
+
+Use `@SceneStorage` when you need SwiftUI to save and restore lightweight UI state for a specific scene.
+
+A scene usually represents a window or an instance of your app UI.
+
+`@SceneStorage` is similar to `@State`, but SwiftUI can try to restore its value when the scene is recreated.
+
+### Example
+
+```swift
+struct SearchView: View {
+    @SceneStorage("searchText") private var searchText = ""
+
+    var body: some View {
+        TextField("Search", text: $searchText)
+    }
+}
+```
+
+Here, `searchText` is UI state related to this scene.
+
+SwiftUI may restore it if the scene is recreated.
+
+### Another example
+
+```swift
+struct HomeView: View {
+    @SceneStorage("selectedTab") private var selectedTab = 0
+
+    var body: some View {
+        TabView(selection: $selectedTab) {
+            Text("Home")
+                .tag(0)
+
+            Text("Profile")
+                .tag(1)
+        }
+    }
+}
+```
+
+Here, `@SceneStorage` can remember the selected tab for this scene.
+
+### Supported types
+
+`@SceneStorage` accepts the same restricted set of types as `@AppStorage`:
+
+```text
+Bool
+Int
+Double
+String
+URL
+Data
+RawRepresentable enums whose RawValue is one of the above
+```
+
+If you need to persist a struct or array, encode it to `Data` with `JSONEncoder` first.
+
+### Good use cases
+
+Use `@SceneStorage` for lightweight UI state like:
+
+```text
+Search text
+Selected tab
+Selected item id
+Draft UI input
+Current screen state inside a scene
+```
+
+### `@SceneStorage` vs `@AppStorage`
+
+`@AppStorage` has a longer lifetime than `@SceneStorage`.
+
+`@AppStorage` stores values in `UserDefaults`.
+
+That means the value is usually still available after closing and reopening the app.
+
+Example:
+
+```swift
+@AppStorage("selectedLanguage") private var selectedLanguage = "en"
+```
+
+This is a good use case for `@AppStorage`, because the selected language is an app preference and should stay saved.
+
+But `@SceneStorage` is different.
+
+`@SceneStorage` is mainly used for scene state restoration, not permanent storage.
+
+Example:
+
+```swift
+@SceneStorage("searchText") private var searchText = ""
+```
+
+This is good for temporary UI state, like restoring what the user was typing in a search field.
+
+### Does `@SceneStorage` get cleared if the app is fully closed?
+
+You should not treat `@SceneStorage` as long-term storage.
+
+If the app goes to the background and comes back, or if SwiftUI recreates the scene, the value may be restored.
+
+But if the app is fully closed, killed, or the system removes the saved scene state, the value may be lost.
+
+So the practical rule is:
+
+```text
+Use @SceneStorage for temporary scene-based UI restoration.
+Use @AppStorage for values that must stay saved after closing and reopening the app.
+```
+
+### Difference table
+
+| Wrapper | Storage Lifetime | Best For |
+|---|---|---|
+| `@SceneStorage` | Temporary per-scene restoration | Search text, selected tab, selected item |
+| `@AppStorage` | Longer persistent storage using UserDefaults | Language, theme, onboarding status, user preferences |
+
+### Summary
+
+```text
+@SceneStorage is for restoring lightweight UI state for a specific scene.
+It is not a replacement for @AppStorage.
+If the value must stay saved after closing and reopening the app, use @AppStorage.
+```
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+`@SceneStorage` بتستخدم لحفظ حالة بسيطة تخص scene معينة.
+
+يعني مثلًا:
+
+```text
+search text
+selected tab
+selected item
+```
+
+لكن مهم جدًا تفهم الفرق بينها وبين `@AppStorage`.
+
+`@AppStorage` عمر التخزين بتاعها أطول لأنها مبنية على `UserDefaults`.
+
+يعني لو قفلت التطبيق وفتحته تاني، القيمة غالبًا هتفضل موجودة.
+
+أما `@SceneStorage` فهي معمولة أكتر عشان state restoration.
+
+يعني SwiftUI ممكن ترجع القيمة لو الـ scene اتعملها recreate، لكن متعتمدش عليها كـ storage دائم.
+
+لو التطبيق اتقفل تمامًا، أو اتقتل، أو النظام مسح حالة الـ scene، القيمة ممكن تضيع.
+
+القاعدة العملية:
+
+```text
+لو القيمة لازم تفضل بعد قفل وفتح التطبيق
+→ استخدم @AppStorage
+
+لو القيمة مجرد UI state مؤقت للـ scene
+→ استخدم @SceneStorage
+```
+
+</div>
+
+</details>
+
+---
+
+## `@GestureState`
+
+> **Availability:** iOS 13+ / macOS 10.15+ / watchOS 6+ / tvOS 13+
+
+Use `@GestureState` to store temporary state while a gesture is active.
+
+The important point is:
+
+```text
+@GestureState automatically resets to its initial value when the gesture ends.
+```
+
+This makes it useful for gestures like:
+
+```text
+Drag
+Long press
+Magnification
+Rotation
+Gesture progress
+```
+
+### Example
+
+```swift
+struct DragExampleView: View {
+    @GestureState private var dragOffset: CGSize = .zero
+
+    var body: some View {
+        Circle()
+            .frame(width: 100, height: 100)
+            .offset(dragOffset)
+            .gesture(
+                DragGesture()
+                    .updating($dragOffset) { value, state, _ in
+                        state = value.translation
+                    }
+            )
+    }
+}
+```
+
+Here, `dragOffset` changes while the user is dragging.
+
+When the user releases the drag, `dragOffset` automatically returns to:
+
+```swift
+.zero
+```
+
+### `@GestureState` vs `@State`
+
+Use `@GestureState` for temporary gesture values.
+
+Use `@State` if you want to keep the final value after the gesture ends.
+
+### Example using both
+
+```swift
+struct DraggableView: View {
+    @State private var finalOffset: CGSize = .zero
+    @GestureState private var dragOffset: CGSize = .zero
+
+    var body: some View {
+        Circle()
+            .frame(width: 100, height: 100)
+            .offset(
+                width: finalOffset.width + dragOffset.width,
+                height: finalOffset.height + dragOffset.height
+            )
+            .gesture(
+                DragGesture()
+                    .updating($dragOffset) { value, state, _ in
+                        state = value.translation
+                    }
+                    .onEnded { value in
+                        finalOffset.width += value.translation.width
+                        finalOffset.height += value.translation.height
+                    }
+            )
+    }
+}
+```
+
+In this example:
+
+```text
+@GestureState stores the temporary drag movement.
+@State stores the final position after the drag ends.
+```
+
+### Summary
+
+```text
+@GestureState stores temporary gesture state.
+SwiftUI resets it automatically when the gesture ends.
+```
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+`@GestureState` بتستخدم مع الـ gestures.
+
+أهم فرق بينها وبين `@State` إن `@GestureState` بترجع للقيمة الأصلية تلقائيًا لما الـ gesture يخلص.
+
+مثال:
+
+لو المستخدم بيسحب view، ممكن تستخدم `@GestureState` للحركة المؤقتة أثناء السحب.
+
+لكن لو عاوز تحفظ المكان النهائي بعد ما المستخدم يسيب السحب، استخدم `@State`.
+
+```text
+@GestureState = قيمة مؤقتة أثناء الـ gesture
+@State = قيمة تفضل محفوظة بعد التغيير
+```
+
+</div>
+
+</details>
+
+---
+
+## `@Namespace`
+
+> **Availability:** iOS 14+ / macOS 11+ / watchOS 7+ / tvOS 14+ (same for `matchedGeometryEffect`)
+
+Use `@Namespace` to create a shared animation namespace.
+
+It is commonly used with:
+
+```swift
+matchedGeometryEffect
+```
+
+The main idea is that SwiftUI can connect two related views and animate smoothly between them.
+
+### Example
+
+```swift
+struct NamespaceExampleView: View {
+    @Namespace private var animation
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack {
+            if isExpanded {
+                RoundedRectangle(cornerRadius: 20)
+                    .matchedGeometryEffect(id: "card", in: animation)
+                    .frame(width: 300, height: 300)
+            } else {
+                RoundedRectangle(cornerRadius: 20)
+                    .matchedGeometryEffect(id: "card", in: animation)
+                    .frame(width: 100, height: 100)
+            }
+        }
+        .onTapGesture {
+            withAnimation {
+                isExpanded.toggle()
+            }
+        }
+    }
+}
+```
+
+Both views use the same:
+
+```swift
+.matchedGeometryEffect(id: "card", in: animation)
+```
+
+So SwiftUI understands that these two views represent the same visual element in different states.
+
+Instead of removing one view and showing another suddenly, SwiftUI creates a smooth transition between them.
+
+### When should you use `@Namespace`?
+
+Use `@Namespace` when you need:
+
+```text
+Shared element animation
+Smooth transition between related views
+matchedGeometryEffect
+Card expand/collapse animation
+Image transition between list and details screen
+```
+
+### Summary
+
+```text
+@Namespace creates an animation namespace.
+It is mainly used with matchedGeometryEffect.
+It does not store app data or ViewModel state.
+```
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+`@Namespace` بتستخدم غالبًا مع `matchedGeometryEffect`.
+
+فكرتها إنها بتعمل مساحة مشتركة للـ animation، عشان SwiftUI تفهم إن view معينة و view تانية هما نفس العنصر بصريًا لكن في شكل أو مكان مختلف.
+
+مثال:
+
+كارت صغير في list ولما تضغط عليه يفتح كارت كبير في details.
+
+باستخدام `@Namespace` و `matchedGeometryEffect`، SwiftUI تقدر تعمل transition ناعم بين الشكلين.
+
+`@Namespace` مش لتخزين data، ومش للـ ViewModel.
+
+هي للـ animations.
+
+</div>
+
+</details>
+
+---
+
+## Adjacent Wrappers Summary Table
+
+| Wrapper | Purpose | Common Use |
+|---|---|---|
+| `@FocusState` | Tracks and controls input focus | Open/dismiss keyboard, move between text fields |
+| `@SceneStorage` | Saves lightweight per-scene UI state | Restore selected tab, search text, selected item |
+| `@GestureState` | Stores temporary gesture state | Drag, long press, magnification, gesture progress |
+| `@Namespace` | Creates a shared animation namespace | `matchedGeometryEffect` animations |
+
+---
+
+## Adjacent Wrappers Mental Model
+
+```text
+@FocusState
+→ Keyboard and input focus.
+
+@SceneStorage
+→ Temporary scene-based UI state restoration.
+
+@GestureState
+→ Temporary state while a gesture is active.
+
+@Namespace
+→ Shared identity for animations.
+
+@AppStorage
+→ Longer persistent storage using UserDefaults.
+```
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+الخلاصة:
+
+```text
+@FocusState
+= للتحكم في الفوكس والكيبورد
+
+@SceneStorage
+= لحفظ حالة UI بسيطة ومؤقتة للـ scene
+
+@GestureState
+= لحالة مؤقتة أثناء الـ gesture
+
+@Namespace
+= لربط animations بين views مختلفة
+
+@AppStorage
+= تخزين أطول باستخدام UserDefaults
+```
+
+</div>
+
+</details>
+
+---
+
 ## Apartment Analogy
 
 A simple analogy to remember the differences between SwiftUI property wrappers.
@@ -1344,6 +1996,48 @@ Example:
 hasSeenOnboarding, selectedLanguage, selectedTheme
 ```
 
+```text
+@FocusState
+= A spotlight inside your apartment that points at one device at a time.
+
+You decide which device (TextField) gets attention, and you can turn the spotlight off.
+
+Example:
+focus the phone field, then move focus to the password field, then dismiss the keyboard
+```
+
+```text
+@SceneStorage
+= A sticky note inside your apartment for the current visit.
+
+If you step out and come back, the note may still be there.
+But if you fully move out (the app is killed), the note can disappear.
+
+Example:
+remember the search text or selected tab while the user navigates the app
+```
+
+```text
+@GestureState
+= Something you hold in your hand while doing an action.
+
+The moment you let go, your hand is empty again.
+The value resets automatically when the gesture ends.
+
+Example:
+the temporary offset while the user is dragging a card
+```
+
+```text
+@Namespace
+= A shared label between two pieces of furniture in different rooms.
+
+The building uses the label to move smoothly between them — same identity, different shape or place.
+
+Example:
+a small card in a list smoothly expanding into a big card on the details screen
+```
+
 <details>
 <summary>بالعربي المختصر</summary>
 
@@ -1357,6 +2051,10 @@ hasSeenOnboarding, selectedLanguage, selectedTheme
 @Environment = إعدادات عامة في العمارة كلها، زي اللغة أو الثيم أو dismiss
 @EnvironmentObject = نظام مشترك في العمارة، زي session أو coordinator
 @AppStorage = نوتة بتخزن فيها إعدادات بسيطة وتفضل محفوظة بعدين
+@FocusState = كشاف بيضوي على جهاز واحد في الأوضة، يعني بتحدد أنهي TextField شغال دلوقتي
+@SceneStorage = ورقة لاصقة جوه الشقة للزيارة الحالية، لو خرجت ورجعت ممكن تلاقيها، لكن لو سبت الشقة خالص ممكن تروح
+@GestureState = حاجة ماسكها في إيدك أثناء حركة، أول ما تسيبها إيدك ترجع فاضية تلقائي
+@Namespace = لافتة مشتركة بين قطعتين أثاث في أوض مختلفة، عشان المبنى ينقل بينهم بشكل ناعم
 ```
 
 </div>
@@ -1477,19 +2175,88 @@ Example:
 @AppStorage("isFirstTime") private var isFirstTime = true
 ```
 
+
+---
+
+### Use `@FocusState` when:
+
+```text
+You need to control input focus
+You need to open or dismiss the keyboard
+You need to move between text fields
+```
+
+Example:
+
+```swift
+@FocusState private var focusedField: Field?
+```
+
+---
+
+### Use `@SceneStorage` when:
+
+```text
+The value is lightweight UI state
+The value belongs to a specific scene
+You want SwiftUI to restore it when the scene is recreated
+```
+
+Example:
+
+```swift
+@SceneStorage("searchText") private var searchText = ""
+```
+
+---
+
+### Use `@GestureState` when:
+
+```text
+The value is temporary
+The value exists only while a gesture is active
+The value should reset automatically when the gesture ends
+```
+
+Example:
+
+```swift
+@GestureState private var dragOffset: CGSize = .zero
+```
+
+---
+
+### Use `@Namespace` when:
+
+```text
+You need matchedGeometryEffect
+You need a shared animation identity
+You need a smooth transition between related views
+```
+
+Example:
+
+```swift
+@Namespace private var animation
+```
+
 ---
 
 ## Summary Table
 
-| Wrapper | Type | Owner | Best For |
+| Wrapper | Kind | Owner | Best For |
 |---|---|---|---|
 | `@State` | Value | Current View | Local UI state |
-| `@Binding` | Binding to value | Parent View | Child editing parent state |
-| `@StateObject` | `ObservableObject` | Current View | Screen ViewModel |
-| `@ObservedObject` | `ObservableObject` | Parent View | Child using parent ViewModel |
-| `@Environment` | Environment value | SwiftUI / Parent | `dismiss`, `colorScheme`, `locale` |
-| `@EnvironmentObject` | Shared `ObservableObject` | Parent / App | `session`, `coordinator`, `settings` |
-| `@AppStorage` | UserDefaults value | UserDefaults | Simple persistent preferences |
+| `@Binding` | Binding | Parent View | Child editing parent state |
+| `@StateObject` | Object | Current View | Screen ViewModel |
+| `@ObservedObject` | Object | Parent View | Child using parent ViewModel |
+| `@Environment` | Env value | SwiftUI / Parent | `dismiss`, `colorScheme`, `locale` |
+| `@EnvironmentObject` | Env object | Parent / App | `session`, `coordinator`, `settings` |
+| `@AppStorage` | Persisted value | UserDefaults | Simple persistent preferences |
+| `@FocusState` | Focus state | Current View | Keyboard and input focus |
+| `@SceneStorage` | Scene state | SwiftUI scene | Lightweight per-scene UI restoration |
+| `@GestureState` | Gesture state | Current gesture | Drag, long press, gesture progress |
+| `@Namespace` | Animation ID | Current View | `matchedGeometryEffect` animations |
 
 ---
 
@@ -1659,6 +2426,97 @@ CartManager
 
 ---
 
+### Mistake 8: Using `@State` for drag offsets instead of `@GestureState`
+
+Wrong:
+
+```swift
+struct DragView: View {
+    @State private var dragOffset: CGSize = .zero
+
+    var body: some View {
+        Circle()
+            .offset(dragOffset)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        dragOffset = value.translation
+                    }
+            )
+    }
+}
+```
+
+When the user lets go, `dragOffset` stays at the last drag value and the circle is stuck off-center until you manually reset it in `.onEnded`.
+
+Correct:
+
+```swift
+@GestureState private var dragOffset: CGSize = .zero
+
+// ...
+
+.gesture(
+    DragGesture()
+        .updating($dragOffset) { value, state, _ in
+            state = value.translation
+        }
+)
+```
+
+`@GestureState` resets to its initial value automatically when the gesture ends — no manual cleanup needed. See [`@GestureState`](#gesturestate) for the full pattern.
+
+---
+
+### Mistake 9: Treating `@SceneStorage` as permanent storage
+
+Wrong assumption:
+
+```swift
+@SceneStorage("isLoggedIn") private var isLoggedIn = false
+```
+
+`@SceneStorage` is for scene-level UI restoration, not durable storage. If the app is killed or the system discards the saved scene state, the value can be lost — which means the user may suddenly appear logged out.
+
+Correct:
+
+```text
+Use @AppStorage (or Keychain for sensitive data) for values that must survive app restarts.
+Use @SceneStorage only for lightweight UI state like search text or selected tab.
+```
+
+See [`@SceneStorage` vs `@AppStorage`](#scenestorage-vs-appstorage) for the full comparison.
+
+---
+
+### Mistake 10: Many `Bool` `@FocusState` properties instead of one enum
+
+Wrong:
+
+```swift
+@FocusState private var isPhoneFocused: Bool
+@FocusState private var isPasswordFocused: Bool
+@FocusState private var isEmailFocused: Bool
+```
+
+Now moving focus between fields means flipping multiple Bools, and it's easy to end up with two fields "focused" at once in your state, even though only one really is.
+
+Better:
+
+```swift
+enum Field {
+    case phone
+    case password
+    case email
+}
+
+@FocusState private var focusedField: Field?
+```
+
+One property tracks the currently focused field, and `nil` means "no focus / keyboard dismissed". Moving focus is just `focusedField = .password`.
+
+---
+
 ## Recommended Usage in Real Projects
 
 A practical setup for real SwiftUI projects:
@@ -1684,6 +2542,18 @@ Dismiss/theme/language/layout direction
 
 Simple persisted flag
 → @AppStorage
+
+Keyboard/input focus
+→ @FocusState
+
+Temporary scene restoration state
+→ @SceneStorage
+
+Temporary gesture state
+→ @GestureState
+
+Matched geometry animation
+→ @Namespace
 
 Token/sensitive data
 → Keychain
@@ -1781,6 +2651,18 @@ Shared app/flow object
 
 Simple persistent UserDefaults value
 → @AppStorage
+
+Keyboard/input focus
+→ @FocusState
+
+Temporary scene restoration state
+→ @SceneStorage
+
+Temporary gesture state
+→ @GestureState
+
+Shared animation identity
+→ @Namespace
 ```
 
 <details>
@@ -1819,7 +2701,7 @@ It focuses on real-world usage, common mistakes, and choosing the right wrapper 
 **What this guide does *not* cover (yet):**
 
 - The iOS 17+ **Observation framework** (`@Observable`, `@Bindable`, and the new `@Environment(MyType.self)` syntax) — coming in a separate article.
-- Adjacent property wrappers like `@FocusState`, `@SceneStorage`, `@GestureState`, `@Namespace`, `@Query` (SwiftData), and `@FetchRequest` (Core Data).
+- SwiftData and Core Data wrappers like `@Query` and `@FetchRequest` — coming in separate articles.
 
 <details>
 <summary>بالعربي</summary>
