@@ -1,13 +1,13 @@
 # SwiftUI Property Wrappers Explained
 
-A practical guide to `@State`, `@Binding`, `@StateObject`, `@ObservedObject`, `@Environment`, `@EnvironmentObject`, `@AppStorage`, and adjacent SwiftUI property wrappers like `@FocusState`, `@SceneStorage`, `@GestureState`, and `@Namespace`.
+A practical guide to `@State`, `@Binding`, `@StateObject`, `@ObservedObject`, `@Environment`, `@EnvironmentObject`, `@AppStorage`, and adjacent SwiftUI property wrappers like `@FocusState`, `@SceneStorage`, `@GestureState`, and `@Namespace` — plus the modern iOS 17+ **Observation framework** (`@Observable`).
 
 <details>
 <summary>بالعربي</summary>
 
 <div dir="rtl">
 
-شرح عملي ومبسط لأهم Property Wrappers في SwiftUI مع أمثلة وتشبيهات تساعدك تختار النوع الصح في كل حالة، بالإضافة إلى wrappers متخصصة زي `@FocusState`, `@SceneStorage`, `@GestureState`, و `@Namespace`.
+شرح عملي ومبسط لأهم Property Wrappers في SwiftUI مع أمثلة وتشبيهات تساعدك تختار النوع الصح في كل حالة، بالإضافة إلى wrappers متخصصة زي `@FocusState`, `@SceneStorage`, `@GestureState`, و `@Namespace`، وكمان نظام الـ Observation الحديث في iOS 17+ (`@Observable`).
 
 </div>
 
@@ -31,19 +31,30 @@ A practical guide to `@State`, `@Binding`, `@StateObject`, `@ObservedObject`, `@
 10. [`@Environment`](#environment)
 11. [`@EnvironmentObject`](#environmentobject)
 12. [`@AppStorage`](#appstorage)
-13. [Adjacent SwiftUI Property Wrappers](#adjacent-swiftui-property-wrappers)
+13. [The Modern Observation Framework (iOS 17+)](#the-modern-observation-framework-ios-17)
+    - [The Old Way: `ObservableObject`](#the-old-way-observableobject)
+    - [The New Way: `@Observable`](#the-new-way-observable)
+    - [How Does the View Observe Changes Without `@Published`?](#how-does-the-view-observe-changes-without-published)
+    - [Why `@State` Instead of `@StateObject`?](#why-state-instead-of-stateobject)
+    - [`@State` with a Value Type vs a Reference Type](#state-with-a-value-type-vs-a-reference-type)
+    - [Passing an `@Observable` ViewModel from a Parent](#passing-an-observable-viewmodel-from-a-parent)
+    - [Computed Properties and Observation](#computed-properties-and-observation)
+    - [`@MainActor` with `@Observable` ViewModels](#mainactor-with-observable-viewmodels)
+    - [Old vs New Comparison](#old-vs-new-comparison)
+    - [Is the Old Approach Deprecated?](#is-the-old-approach-deprecated)
+14. [Adjacent SwiftUI Property Wrappers](#adjacent-swiftui-property-wrappers)
     - [`@FocusState`](#focusstate)
     - [`@SceneStorage`](#scenestorage)
     - [`@GestureState`](#gesturestate)
     - [`@Namespace`](#namespace)
     - [Adjacent Wrappers Summary Table](#adjacent-wrappers-summary-table)
     - [Adjacent Wrappers Mental Model](#adjacent-wrappers-mental-model)
-14. [Apartment Analogy](#apartment-analogy)
-15. [Quick Decision Guide](#quick-decision-guide)
-16. [Summary Table](#summary-table)
-17. [Common Mistakes](#common-mistakes)
-18. [Recommended Usage in Real Projects](#recommended-usage-in-real-projects)
-19. [Final Conclusion](#final-conclusion)
+15. [Apartment Analogy](#apartment-analogy)
+16. [Quick Decision Guide](#quick-decision-guide)
+17. [Summary Table](#summary-table)
+18. [Common Mistakes](#common-mistakes)
+19. [Recommended Usage in Real Projects](#recommended-usage-in-real-projects)
+20. [Final Conclusion](#final-conclusion)
 
 ---
 
@@ -620,6 +631,8 @@ This avoids "Publishing changes from background threads is not allowed" warnings
 
 </details>
 
+> **iOS 17+:** If your minimum deployment target is iOS 17 or newer, prefer an `@Observable` class stored in `@State` instead of `@StateObject`. See [The Modern Observation Framework (iOS 17+)](#the-modern-observation-framework-ios-17).
+
 ---
 
 ## `ObservableObject` and `@Published`
@@ -863,6 +876,8 @@ View receives the object
 </div>
 
 </details>
+
+> **iOS 17+:** With an `@Observable` class, the passed-down child usually needs only a plain property (often `let`) instead of `@ObservedObject`. See [Passing an `@Observable` ViewModel from a Parent](#passing-an-observable-viewmodel-from-a-parent).
 
 ---
 
@@ -1270,6 +1285,512 @@ Not automatically reactive in SwiftUI unless you add observation manually
 استخدمه مع القيم البسيطة وغير الحساسة.
 
 أما token أو password أو أي بيانات حساسة، استخدم Keychain.
+
+</div>
+
+</details>
+
+---
+
+## The Modern Observation Framework (iOS 17+)
+
+> **Availability:** iOS 17+ / macOS 14+ / Swift 5.9+
+
+Starting with iOS 17 and Swift 5.9, Apple introduced a new system for observing data changes called **Observation**.
+
+The new approach is based on the `@Observable` macro:
+
+```swift
+import Observation
+
+@Observable
+final class CounterViewModel {
+    var count = 0
+}
+```
+
+Instead of the old approach based on Combine:
+
+```swift
+import Combine
+
+final class CounterViewModel: ObservableObject {
+    @Published var count = 0
+}
+```
+
+The core idea is that SwiftUI now knows exactly which properties were read inside a `body`, and re-evaluates the view only when those specific properties change.
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+من iOS 17 وSwift 5.9، قدمت Apple نظام جديد لمراقبة البيانات اسمه **Observation** بيعتمد على الـ macro اسمه `@Observable` بدل `ObservableObject` و `@Published` القديمة.
+
+الفكرة إن SwiftUI بقت تعرف بالظبط أي properties اتقرت جوه الـ `body`، وتعيد تحديث الـ View فقط لما الـ properties دي تتغير.
+
+</div>
+
+</details>
+
+---
+
+### The Old Way: `ObservableObject`
+
+Before iOS 17, a ViewModel was usually written like this:
+
+```swift
+import SwiftUI
+import Combine
+
+@MainActor
+final class CounterViewModel: ObservableObject {
+    @Published var count = 0
+    @Published var title = "Counter"
+
+    func increment() {
+        count += 1
+    }
+}
+```
+
+And in the view:
+
+```swift
+struct CounterView: View {
+    @StateObject private var viewModel = CounterViewModel()
+
+    var body: some View {
+        VStack {
+            Text(viewModel.title)
+            Text("\(viewModel.count)")
+
+            Button("Increase") {
+                viewModel.increment()
+            }
+        }
+    }
+}
+```
+
+How it worked:
+
+```text
+@Published property changed
+→ objectWillChange sends an event
+→ @StateObject receives the event
+→ SwiftUI recalculates body
+```
+
+The important limitation: the notification is usually at the level of the **whole object** (`CounterViewModel changed`), not a specific property. So changing `title` invalidates the view even if the body only reads `count`.
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+في النظام القديم الـ ViewModel بيطابق `ObservableObject`، وكل property نراقبها بنحط عليها `@Published`. لما القيمة تتغير، `objectWillChange` بيبعت event والـ `@StateObject` بيستقبله وSwiftUI تعيد تقييم الـ `body`.
+
+المشكلة إن الإشعار غالبًا على مستوى الـ object كله مش على مستوى property محددة.
+
+</div>
+
+</details>
+
+---
+
+### The New Way: `@Observable`
+
+In iOS 17+ the same ViewModel becomes:
+
+```swift
+import Observation
+
+@MainActor
+@Observable
+final class CounterViewModel {
+    var count = 0
+    var title = "Counter"
+    var isLoading = false
+
+    func increment() {
+        count += 1
+    }
+}
+```
+
+And in the view, notice `@State` instead of `@StateObject`, and no `@Published`:
+
+```swift
+import SwiftUI
+
+struct CounterView: View {
+    @State private var viewModel = CounterViewModel()
+
+    var body: some View {
+        VStack {
+            Text("\(viewModel.count)")
+
+            Button("Increase") {
+                viewModel.increment()
+            }
+        }
+    }
+}
+```
+
+Here the view reads `viewModel.count`, but it does **not** read `viewModel.title` or `viewModel.isLoading`. So SwiftUI records that this view depends only on `count`. If `title` or `isLoading` changes, this view is not re-evaluated, because it never read them inside `body`.
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+في النظام الجديد بنكتب `@Observable` على الـ class، وبنستخدم `@State` بدل `@StateObject`، ومن غير `@Published` خالص.
+
+الـ View اللي بتقرا `count` بس، SwiftUI بتسجّل إنها تعتمد على `count` فقط. لو `title` أو `isLoading` اتغيرت، الـ View مش هتتحدث لأنها ماقرتهاش جوه الـ `body`.
+
+</div>
+
+</details>
+
+---
+
+### How Does the View Observe Changes Without `@Published`?
+
+`@Observable` is **not** a property wrapper. It is a **macro** that runs at compile time and automatically injects observation code into your class.
+
+The generated code is roughly similar to this (illustrative, not the exact compiler output):
+
+```swift
+final class CounterViewModel: Observable {
+
+    private let observationRegistrar = ObservationRegistrar()
+
+    private var _count = 0
+
+    var count: Int {
+        get {
+            observationRegistrar.access(self, keyPath: \.count)
+            return _count
+        }
+        set {
+            observationRegistrar.withMutation(of: self, keyPath: \.count) {
+                _count = newValue
+            }
+        }
+    }
+}
+```
+
+When SwiftUI executes `Text("\(viewModel.count)")`, the `count` getter runs and registers that this view read this property:
+
+```text
+CounterView depends on:
+- this ViewModel instance
+- a property named count
+```
+
+When `viewModel.count += 1` runs, the setter notifies the Observation system, which finds the views that read `count` and invalidates them.
+
+The full flow:
+
+```text
+SwiftUI executes body
+→ body reads viewModel.count
+→ Observation records the dependency
+→ viewModel.count changes
+→ Observation notifies SwiftUI
+→ SwiftUI recalculates body
+```
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+`@Observable` مش Property Wrapper، هي **Macro** بتشتغل وقت الـ compile وبتضيف كود مراقبة تلقائي للـ class.
+
+لما SwiftUI تقرا الـ property بيشتغل الـ getter وبيسجّل إن الـ View قرت الـ property دي عن طريق `observationRegistrar.access`. ولما القيمة تتغير بيشتغل الـ setter وبيبلّغ نظام Observation عن طريق `withMutation`، فيلاقي الـ Views اللي قرت الـ property دي ويعملها invalidate.
+
+</div>
+
+</details>
+
+---
+
+### Why `@State` Instead of `@StateObject`?
+
+`@StateObject` belongs to the old system built on `ObservableObject`, `objectWillChange`, and `@Published`.
+
+An `@Observable` class does **not** conform to `ObservableObject` and has no `objectWillChange`, so you use `@State` to store it:
+
+```swift
+@State private var viewModel = CounterViewModel()
+```
+
+It is important to separate the two responsibilities:
+
+```text
+@State
+→ holds the ViewModel instance
+→ manages ownership and lifetime
+
+@Observable
+→ observes the internal properties
+→ notifies SwiftUI when a property used in body changes
+```
+
+`@State` is **not** the thing observing `count` inside the ViewModel. The Observation system generated by `@Observable` does that.
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+`@StateObject` مرتبطة بالنظام القديم (`ObservableObject` و `objectWillChange` و `@Published`). أما الـ class المعمول له `@Observable` فمابيطابقش `ObservableObject`، فبنستخدم `@State`.
+
+مهم تفصل بين الدورين:
+
+- `@State` بتحتفظ بالـ instance وتدير الـ ownership والـ lifetime.
+- `@Observable` بتراقب الـ properties الداخلية وتبلّغ SwiftUI.
+
+</div>
+
+</details>
+
+---
+
+### `@State` with a Value Type vs a Reference Type
+
+`@State` is often used with simple values, but its real meaning is "local state owned by the view that SwiftUI must keep alive for the view's identity." That works for both value types and `@Observable` reference types.
+
+With a value type:
+
+```swift
+@State private var count = 0
+```
+
+Writing `count += 1` changes the stored value itself, so SwiftUI knows the view needs to update.
+
+With an `@Observable` reference type:
+
+```swift
+@State private var viewModel = CounterViewModel()
+```
+
+Writing `viewModel.count += 1` does **not** change the reference stored in `@State` — it still points to the same instance. What changed is a property inside the instance.
+
+```text
+@State with Int
+→ observes the change of the stored value itself.
+
+@State with @Observable class
+→ keeps the instance.
+→ Observation tracks the internal properties.
+```
+
+Before Observation, changing a property on a plain class stored in `@State` was **not** enough to update the view, because the reference never changed — which is exactly why `ObservableObject` + `@Published` + `@StateObject` were required.
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+`@State` مش مخصوصة للـ `String` و`Int` و`Bool` بس. معناها الحقيقي إنها state محلية تمتلكها الـ View وSwiftUI بتحافظ عليها طول عمر هوية الـ View.
+
+- مع value type: تغيير القيمة نفسه بيعرّف SwiftUI تحدّث.
+- مع `@Observable` class: الـ reference مابيتغيرش، `@State` بتحافظ على الـ instance، ونظام Observation بيراقب الـ properties جواها.
+
+قبل Observation، تغيير property على class عادي جوه `@State` ماكانش كفاية عشان الـ reference مابيتغيرش، وعشان كده كنا محتاجين `ObservableObject` + `@Published` + `@StateObject`.
+
+</div>
+
+</details>
+
+---
+
+### Passing an `@Observable` ViewModel from a Parent
+
+When the view **creates** the ViewModel, it owns it, so it uses `@State`:
+
+```swift
+struct CounterView: View {
+    @State private var viewModel = CounterViewModel()
+
+    var body: some View {
+        Text("\(viewModel.count)")
+    }
+}
+```
+
+When the ViewModel is created by a parent and **passed down**, the child can use a plain property:
+
+```swift
+struct CounterDetailsView: View {
+    let viewModel: CounterViewModel
+
+    var body: some View {
+        Text("\(viewModel.count)")
+    }
+}
+```
+
+Even though it is declared with `let`, the view still updates when `viewModel.count` changes. `let` only prevents reassigning the reference (`viewModel = anotherViewModel`); it does not prevent mutating properties inside the instance. As long as the class is `@Observable`, SwiftUI tracks the properties read inside `body`.
+
+> This replaces the old `@ObservedObject` for the passed-down case.
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+لو الـ View هي اللي بتعمل create للـ ViewModel، بتستخدم `@State`.
+
+لو الـ ViewModel جاي من parent، الـ child ممكن يستخدم property عادية بـ `let`. رغم الـ `let`، الـ View هتتحدث لما `viewModel.count` تتغير، لأن `let` بتمنع تغيير الـ reference نفسه بس مش تغيير الـ properties جوه الـ instance. ده بيحل محل `@ObservedObject` القديمة في حالة التمرير.
+
+</div>
+
+</details>
+
+---
+
+### Computed Properties and Observation
+
+Observation works through computed properties too. Whatever stored properties the computed property reads become dependencies of the view.
+
+```swift
+@Observable
+final class LoginViewModel {
+    var email = ""
+    var password = ""
+
+    var isLoginEnabled: Bool {
+        !email.isEmpty && !password.isEmpty
+    }
+}
+```
+
+```swift
+Text(viewModel.isLoginEnabled ? "Enabled" : "Disabled")
+```
+
+Reading `isLoginEnabled` internally reads `email` and `password`, so Observation registers the view as depending on both. When either changes, the view updates.
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+الـ computed properties بتشتغل مع Observation. أي stored properties بتتقرا جوه الـ computed property بتبقى dependencies للـ View.
+
+هنا قراءة `isLoginEnabled` بتقرا `email` و`password` جواها، فأي واحدة تتغير الـ View تتحدث.
+
+</div>
+
+</details>
+
+---
+
+### `@MainActor` with `@Observable` ViewModels
+
+`@Observable` does **not** automatically make the ViewModel run on the main actor. For ViewModels that drive UI state, it is usually best to mark them with `@MainActor`:
+
+```swift
+@MainActor
+@Observable
+final class HomeViewModel {
+    var items: [String] = []
+    var isLoading = false
+}
+```
+
+This ensures UI-related state (`items`, `isLoading`, `errorMessage`, `selectedItem`, ...) is accessed and mutated safely on the main actor.
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+`@Observable` ماتعنيش إن الـ ViewModel بيشتغل تلقائيًا على الـ Main Actor. فالأفضل تحط `@MainActor` على الـ ViewModels اللي بتتحكم في UI state عشان تعديل الحالة يتم بأمان على الـ main actor.
+
+</div>
+
+</details>
+
+---
+
+### Old vs New Comparison
+
+| Old System | New System |
+|---|---|
+| `ObservableObject` | `@Observable` |
+| `@Published var count` | `var count` |
+| `@StateObject` when the view creates the ViewModel | `@State` |
+| `@ObservedObject` when the ViewModel is passed in | plain property (often `let`) |
+| Based on Combine | Based on Observation |
+| Sends `objectWillChange` | Tracks access to individual properties |
+| Notification usually at object level | Tracking at property + instance level |
+
+---
+
+### Is the Old Approach Deprecated?
+
+No. `ObservableObject`, `@Published`, `@StateObject`, and `@ObservedObject` still work, and are still required when your app supports iOS versions older than 17.
+
+Use the old approach when your deployment target is below iOS 17:
+
+```swift
+@MainActor
+final class HomeViewModel: ObservableObject {
+    @Published var items: [String] = []
+}
+```
+
+```swift
+struct HomeView: View {
+    @StateObject private var viewModel = HomeViewModel()
+
+    var body: some View {
+        Text("\(viewModel.items.count)")
+    }
+}
+```
+
+Use Observation when your minimum supported version is iOS 17 or newer:
+
+```swift
+@MainActor
+@Observable
+final class HomeViewModel {
+    var items: [String] = []
+}
+```
+
+```swift
+struct HomeView: View {
+    @State private var viewModel = HomeViewModel()
+
+    var body: some View {
+        Text("\(viewModel.items.count)")
+    }
+}
+```
+
+**Key sentence:** `@State` keeps the ViewModel alive, while `@Observable` makes SwiftUI listen to changes of the internal properties.
+
+<details>
+<summary>بالعربي</summary>
+
+<div dir="rtl">
+
+الطريقة القديمة **مش** متلغية. `ObservableObject` و `@Published` و `@StateObject` و `@ObservedObject` لسه شغالين، ولسه مطلوبين لو التطبيق بيدعم إصدارات أقدم من iOS 17.
+
+- deployment target أقل من iOS 17 → استخدم النظام القديم.
+- أقل إصدار مدعوم iOS 17 أو أحدث → استخدم Observation.
+
+أهم جملة: `@State` بتحافظ على عمر الـ ViewModel، و`@Observable` بتخلي SwiftUI تسمع تغييرات الـ properties الداخلية.
 
 </div>
 
@@ -2517,16 +3038,51 @@ One property tracks the currently focused field, and `nil` means "no focus / key
 
 ---
 
+### Mistake 11: Using `@StateObject` / `@ObservedObject` with an `@Observable` class
+
+Wrong:
+
+```swift
+@Observable
+final class CounterViewModel {
+    var count = 0
+}
+
+struct CounterView: View {
+    @StateObject private var viewModel = CounterViewModel() // ❌ won't compile
+}
+```
+
+An `@Observable` class does not conform to `ObservableObject`, so `@StateObject` and `@ObservedObject` do not apply to it.
+
+Correct:
+
+```swift
+struct CounterView: View {
+    @State private var viewModel = CounterViewModel()
+}
+```
+
+For a passed-down ViewModel, use a plain property instead of `@ObservedObject`. See [The Modern Observation Framework (iOS 17+)](#the-modern-observation-framework-ios-17).
+
+---
+
 ## Recommended Usage in Real Projects
 
 A practical setup for real SwiftUI projects:
 
 ```text
-Screen ViewModel
-→ @StateObject
+Screen ViewModel (iOS 16 and below)
+→ ObservableObject + @StateObject
 
-Child View using the same ViewModel
+Screen ViewModel (iOS 17+)
+→ @Observable + @State
+
+Child View using the same ViewModel (iOS 16 and below)
 → @ObservedObject
+
+Child View using the same ViewModel (iOS 17+)
+→ plain property (often let)
 
 Reusable component editing parent value
 → @Binding
@@ -2698,10 +3254,11 @@ It focuses on real-world usage, common mistakes, and choosing the right wrapper 
 
 **Intended audience:** iOS developers learning or refreshing their understanding of SwiftUI state.
 
+It also covers the iOS 17+ **Observation framework** (`@Observable` + `@State` for ViewModels) as the modern replacement for `ObservableObject` and `@Published`.
+
 **What this guide does *not* cover (yet):**
 
-- The iOS 17+ **Observation framework** (`@Observable`, `@Bindable`, and the new `@Environment(MyType.self)` syntax) — coming in a separate article.
-- SwiftData and Core Data wrappers like `@Query` and `@FetchRequest` — coming in separate articles.
+- Deeper Observation topics like `@Bindable` and the new `@Environment(MyType.self)` syntax — coming in a separate article.
 
 <details>
 <summary>بالعربي</summary>
@@ -2710,7 +3267,9 @@ It focuses on real-world usage, common mistakes, and choosing the right wrapper 
 
 الـ README ده مرجع عملي لـ state management في SwiftUI، ومناسب لأي iOS developer.
 
-الإصدار الحالي مش بيغطي الـ Observation framework الجديد (`@Observable` و `@Bindable`) — هيكون في مقال منفصل.
+الدليل ده كمان بيغطي الـ Observation framework بتاع iOS 17+ (`@Observable` مع `@State` للـ ViewModels) كبديل حديث لـ `ObservableObject` و `@Published`.
+
+مواضيع Observation الأعمق زي `@Bindable` والـ `@Environment(MyType.self)` الجديدة هتكون في مقال منفصل.
 
 </div>
 
